@@ -1,5 +1,5 @@
 crewai==1.9.3
-crewai-tools==1.9.3  # Version match karo crewai ke saath
+crewai-tools==1.9.3
 fastapi==0.110.3
 uvicorn==0.29.0
 python-dotenv==1.0.1
