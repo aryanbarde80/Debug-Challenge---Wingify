@@ -1,4 +1,4 @@
-## Importing libraries and files
+# Importing libraries and files
 import os
 import re
 import hashlib
@@ -12,17 +12,17 @@ from pypdf import PdfReader
 import pandas as pd
 import numpy as np
 
-## Configuration
+# Configuration
 MAX_FILE_SIZE_MB = 10
 SUPPORTED_LANGUAGES = ['en']  # Add more if needed
 
-## Creating search tool with configuration
+# Creating search tool with configuration
 search_tool = SerperDevTool(
     api_key=os.getenv("SERPER_API_KEY"),
     n_results=5
 )
 
-## Utility functions for text processing
+# Utility functions for text processing
 class TextProcessor:
     """Utility class for text processing operations"""
     
@@ -92,7 +92,7 @@ class TextProcessor:
         
         return financial_terms
 
-## Enhanced PDF Reader Tool with CrewAI BaseTool integration
+# Enhanced PDF Reader Tool with CrewAI BaseTool integration
 class FinancialDocumentTool(BaseTool):
     """Enhanced tool for reading and analyzing financial PDF documents"""
     
@@ -174,7 +174,7 @@ File: {os.path.basename(path)}
 Pages: {metadata['pages']}
 Size: {metadata['file_size_mb']}MB
 
-{document_summary}
+{summary}
 
 CONTENT
 =======
@@ -216,7 +216,7 @@ Numbers Found: {len(numbers)} financial figures detected
         """Async version of the tool"""
         return self._run(path)
 
-## Enhanced Investment Analysis Tool
+# Enhanced Investment Analysis Tool
 class InvestmentTool(BaseTool):
     """Advanced tool for analyzing investment opportunities from financial data"""
     
@@ -257,29 +257,29 @@ class InvestmentTool(BaseTool):
             risks = self._identify_investment_risks(financial_document_data)
             
             # Format the analysis
-            analysis.append("\n📊 KEY METRICS")
+            analysis.append("\nKEY METRICS")
             analysis.append("-" * 40)
             for key, value in metrics.items():
                 if value:
                     analysis.append(f"{key}: {value}")
             
-            analysis.append("\n📈 FINANCIAL RATIOS")
+            analysis.append("\nFINANCIAL RATIOS")
             analysis.append("-" * 40)
             for key, value in ratios.items():
                 if value:
                     analysis.append(f"{key}: {value}")
             
-            analysis.append("\n💡 INVESTMENT OPPORTUNITIES")
+            analysis.append("\nINVESTMENT OPPORTUNITIES")
             analysis.append("-" * 40)
             for opp in opportunities:
-                analysis.append(f"• {opp}")
+                analysis.append(f"- {opp}")
             
-            analysis.append("\n⚠️ INVESTMENT RISKS")
+            analysis.append("\nINVESTMENT RISKS")
             analysis.append("-" * 40)
             for risk in risks:
-                analysis.append(f"• {risk}")
+                analysis.append(f"- {risk}")
             
-            analysis.append("\n📋 PRELIMINARY ASSESSMENT")
+            analysis.append("\nPRELIMINARY ASSESSMENT")
             analysis.append("-" * 40)
             analysis.append(self._generate_investment_assessment(metrics, ratios, opportunities, risks))
             
@@ -466,7 +466,7 @@ Recommendation: {'Consider for further research' if rating == 'POSITIVE' else 'M
         """Async version of the tool"""
         return self._run(financial_document_data)
 
-## Enhanced Risk Assessment Tool
+# Enhanced Risk Assessment Tool
 class RiskTool(BaseTool):
     """Advanced tool for comprehensive risk assessment"""
     
@@ -507,7 +507,7 @@ class RiskTool(BaseTool):
             overall_score, risk_level = self._calculate_risk_score(risk_categories)
             
             # Format the assessment
-            assessment.append(f"\n📊 OVERALL RISK RATING: {risk_level} (Score: {overall_score}/100)")
+            assessment.append(f"\nOVERALL RISK RATING: {risk_level} (Score: {overall_score}/100)")
             assessment.append("-" * 60)
             
             for category, risks in risk_categories.items():
@@ -516,17 +516,17 @@ class RiskTool(BaseTool):
                 
                 if risks:
                     for risk in risks:
-                        assessment.append(f"• {risk}")
+                        assessment.append(f"- {risk}")
                 else:
-                    assessment.append("• No significant risks identified in this category")
+                    assessment.append("- No significant risks identified in this category")
             
             # Add risk heat map
-            assessment.append("\n🔥 RISK HEAT MAP")
+            assessment.append("\nRISK HEAT MAP")
             assessment.append("-" * 40)
             assessment.append(self._generate_risk_heatmap(risk_categories))
             
             # Add mitigation recommendations
-            assessment.append("\n🛡️ RECOMMENDED MITIGATIONS")
+            assessment.append("\nRECOMMENDED MITIGATIONS")
             assessment.append("-" * 40)
             assessment.extend(self._generate_mitigation_recommendations(risk_categories))
             
@@ -687,11 +687,11 @@ class RiskTool(BaseTool):
         for category, risks in risk_categories.items():
             risk_count = len(risks)
             if risk_count >= 4:
-                level = "🔴 HIGH"
+                level = "HIGH"
             elif risk_count >= 2:
-                level = "🟡 MEDIUM"
+                level = "MEDIUM"
             else:
-                level = "🟢 LOW"
+                level = "LOW"
             
             heatmap.append(f"{category:<20} : {level} ({risk_count} risks)")
         
@@ -704,23 +704,23 @@ class RiskTool(BaseTool):
         for category, risks in risk_categories.items():
             if risks:
                 if "FINANCIAL" in category:
-                    recommendations.append("• Strengthen balance sheet and improve liquidity")
-                    recommendations.append("• Consider debt refinancing options")
+                    recommendations.append("- Strengthen balance sheet and improve liquidity")
+                    recommendations.append("- Consider debt refinancing options")
                 elif "OPERATIONAL" in category:
-                    recommendations.append("• Enhance operational resilience and diversify supply chain")
-                    recommendations.append("• Invest in technology and cybersecurity")
+                    recommendations.append("- Enhance operational resilience and diversify supply chain")
+                    recommendations.append("- Invest in technology and cybersecurity")
                 elif "STRATEGIC" in category:
-                    recommendations.append("• Diversify customer and supplier base")
-                    recommendations.append("• Increase R&D investment for innovation")
+                    recommendations.append("- Diversify customer and supplier base")
+                    recommendations.append("- Increase R&D investment for innovation")
                 elif "COMPLIANCE" in category:
-                    recommendations.append("• Strengthen compliance monitoring programs")
-                    recommendations.append("• Conduct regular legal/regulatory audits")
+                    recommendations.append("- Strengthen compliance monitoring programs")
+                    recommendations.append("- Conduct regular legal/regulatory audits")
                 elif "MARKET" in category:
-                    recommendations.append("• Implement hedging strategies for market risks")
-                    recommendations.append("• Diversify geographic exposure")
+                    recommendations.append("- Implement hedging strategies for market risks")
+                    recommendations.append("- Diversify geographic exposure")
         
         if not recommendations:
-            recommendations.append("• No significant risks identified - maintain current risk management practices")
+            recommendations.append("- No significant risks identified - maintain current risk management practices")
         
         return recommendations
     
@@ -728,7 +728,7 @@ class RiskTool(BaseTool):
         """Async version of the tool"""
         return self._run(financial_document_data)
 
-## File validation utility
+# File validation utility
 def validate_file_size(file_size: int, max_size_mb: int = MAX_FILE_SIZE_MB) -> bool:
     """Validate file size doesn't exceed limit"""
     return file_size <= max_size_mb * 1024 * 1024
@@ -738,7 +738,7 @@ def validate_file_extension(filename: str, allowed_extensions: List[str] = ['.pd
     ext = os.path.splitext(filename)[1].lower()
     return ext in allowed_extensions
 
-## Export all tools
+# Export all tools
 __all__ = [
     'search_tool',
     'FinancialDocumentTool',

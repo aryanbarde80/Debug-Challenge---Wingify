@@ -34,7 +34,7 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan events for startup and shutdown"""
+    """Handle startup and shutdown events"""
     # Startup
     logger.info("Starting Financial Document Analyzer API...")
     logger.info(f"Upload directory: {UPLOAD_DIR}")
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown
     logger.info("Shutting down Financial Document Analyzer API...")
-    # Cleanup old files on shutdown
+    # Clean up temporary files
     try:
         for file in os.listdir(UPLOAD_DIR):
             file_path = os.path.join(UPLOAD_DIR, file)
@@ -57,24 +57,24 @@ app = FastAPI(
     title="Financial Document Analyzer",
     description="""Advanced API for analyzing financial documents using multiple specialized AI agents.
     
-    ## Features
-    - 📄 **Document Verification**: Automatically verify if uploaded documents are legitimate financial reports
-    - 📊 **Financial Analysis**: Extract and interpret key financial metrics and performance indicators
-    - 💼 **Investment Recommendations**: Get balanced, data-driven investment advice
-    - ⚠️ **Risk Assessment**: Comprehensive risk analysis across multiple dimensions
-    - 🔄 **Multi-Agent Collaboration**: Four specialized agents work together for thorough analysis
-    
-    ## How It Works
-    1. Upload a PDF financial document
-    2. Optionally specify your query or focus area
-    3. Choose between quick or detailed analysis
-    4. Receive comprehensive insights from all agents
-    
-    ## Agent Team
-    - **Verifier**: Validates document authenticity
-    - **Financial Analyst**: Extracts and interprets financial data
-    - **Investment Advisor**: Provides investment recommendations
-    - **Risk Assessor**: Evaluates potential risks
+Features:
+- Document Verification: Automatically verify if uploaded documents are legitimate financial reports
+- Financial Analysis: Extract and interpret key financial metrics and performance indicators
+- Investment Recommendations: Get balanced, data-driven investment advice
+- Risk Assessment: Comprehensive risk analysis across multiple dimensions
+- Multi-Agent Collaboration: Four specialized agents work together for thorough analysis
+
+How It Works:
+1. Upload a PDF financial document
+2. Optionally specify your query or focus area
+3. Choose between quick or detailed analysis
+4. Receive comprehensive insights from all agents
+
+Agent Team:
+- Verifier: Validates document authenticity
+- Financial Analyst: Extracts and interprets financial data
+- Investment Advisor: Provides investment recommendations
+- Risk Assessor: Evaluates potential risks
     """,
     version="2.0.0",
     contact={
@@ -90,34 +90,34 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Restrict in production
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 def run_crew(query: str, file_path: str, detailed: bool = True) -> str:
-    """Run the crew with appropriate agents based on detail level"""
+    """Execute the crew with appropriate agents based on analysis depth"""
     
-    # Select agents based on query and detail level
+    # Select agents based on detail level
     if detailed:
-        # Use all agents for comprehensive analysis
+        # Comprehensive analysis with all agents
         agents = [verifier, financial_analyst, investment_advisor, risk_assessor]
         tasks = [verification, analyze_financial_document, investment_analysis, risk_assessment]
         logger.info("Running detailed analysis with all 4 agents")
     else:
-        # Quick analysis with just verifier and financial analyst
+        # Quick analysis with core agents only
         agents = [verifier, financial_analyst]
         tasks = [verification, analyze_financial_document]
         logger.info("Running quick analysis with verifier and financial analyst")
     
-    # Check if query needs coordinator (complex queries)
+    # Add coordinator for complex queries
     complex_keywords = ['compare', 'versus', 'vs', 'overview', 'comprehensive', 'synthesize']
     if any(keyword in query.lower() for keyword in complex_keywords):
         agents.insert(0, coordinator)
         logger.info("Added coordinator agent for complex query")
     
-    # Create crew with selected agents and tasks
+    # Create and configure the crew
     financial_crew = Crew(
         agents=agents,
         tasks=tasks,
@@ -129,14 +129,13 @@ def run_crew(query: str, file_path: str, detailed: bool = True) -> str:
         share_crew=False
     )
     
-    # Define inputs for the crew
+    # Prepare inputs for agents
     inputs = {
         'query': query.strip(),
         'file_path': file_path
     }
     
     try:
-        # Kickoff the crew
         logger.info(f"Starting crew analysis with {len(agents)} agents")
         result = financial_crew.kickoff(inputs=inputs)
         logger.info("Crew analysis completed successfully")
@@ -150,7 +149,7 @@ def run_crew(query: str, file_path: str, detailed: bool = True) -> str:
          summary="Root endpoint",
          tags=["Health"])
 async def root():
-    """Health check endpoint returning API status and version"""
+    """Return API status and version information"""
     return {
         "message": "Financial Document Analyzer API is running",
         "status": "operational",
@@ -165,15 +164,15 @@ async def root():
          summary="Health check for monitoring",
          tags=["Health"])
 async def health_check():
-    """Detailed health check endpoint for monitoring systems"""
-    # Check if upload directory is writable
+    """Provide detailed health status for monitoring systems"""
+    # Check upload directory write permissions
     upload_dir_writable = os.access(UPLOAD_DIR, os.W_OK) if os.path.exists(UPLOAD_DIR) else False
     
-    # Check disk space (simple check)
+    # Check available disk space
     try:
         stat = os.statvfs(UPLOAD_DIR)
         free_space_mb = (stat.f_frsize * stat.f_bavail) / (1024 * 1024)
-        disk_ok = free_space_mb > 100  # At least 100MB free
+        disk_ok = free_space_mb > 100
     except:
         disk_ok = False
         free_space_mb = 0
@@ -204,38 +203,24 @@ async def analyze_document(
     detailed_analysis: bool = Form(default=True, description="If True, runs all 4 agents for comprehensive analysis. If False, runs quick analysis with 2 agents.")
 ):
     """
-    Analyze a financial document and get comprehensive insights from multiple AI agents.
+    Analyze a financial document using multiple specialized AI agents.
     
-    ### Parameters:
-    - **file**: PDF file containing the financial document (required, max 10MB)
-    - **query**: Specific questions or focus areas for the analysis (optional)
-    - **detailed_analysis**: 
-      - `True` (default): Runs all 4 agents for comprehensive analysis
-      - `False`: Runs quick analysis with verifier and financial analyst only
+    Parameters:
+    - file: PDF file containing the financial document (required, max 10MB)
+    - query: Specific questions or focus areas for the analysis (optional)
+    - detailed_analysis: 
+      - True (default): Runs all 4 agents for comprehensive analysis
+      - False: Runs quick analysis with verifier and financial analyst only
     
-    ### Returns:
-    - **status**: Success/failure status
-    - **query**: The query that was analyzed
-    - **analysis**: Comprehensive analysis from all agents
-    - **file_processed**: Name of the processed file
-    - **file_id**: Unique identifier for the analysis
-    - **analysis_type**: "detailed" or "quick"
-    - **agents_used**: List of agents that participated
-    - **timestamp**: When the analysis was performed
-    
-    ### Example Response:
-    ```json
-    {
-        "status": "success",
-        "query": "Analyze revenue trends and risks",
-        "analysis": "Document verified as Tesla Q2 2025 Update...",
-        "file_processed": "TSLA-Q2-2025-Update.pdf",
-        "file_id": "550e8400-e29b-41d4-a716-446655440000",
-        "analysis_type": "detailed",
-        "agents_used": ["Verifier", "Financial Analyst", "Investment Advisor", "Risk Assessor"],
-        "timestamp": "2025-02-26T15:30:00Z"
-    }
-    ```
+    Returns:
+    - status: Success or failure status
+    - query: The query that was analyzed
+    - analysis: Comprehensive analysis from all agents
+    - file_processed: Name of the processed file
+    - file_id: Unique identifier for the analysis
+    - analysis_type: "detailed" or "quick"
+    - agents_used: List of agents that participated
+    - timestamp: When the analysis was performed
     """
     
     start_time = datetime.utcnow()
@@ -254,10 +239,9 @@ async def analyze_document(
     
     # Validate file size
     try:
-        # Get file size by reading first chunk
-        file.file.seek(0, 2)  # Seek to end
+        file.file.seek(0, 2)
         file_size = file.file.tell()
-        file.file.seek(0)  # Reset to beginning
+        file.file.seek(0)
         
         if file_size > MAX_FILE_SIZE_MB * 1024 * 1024:
             logger.warning(f"Request {request_id}: File too large: {file_size} bytes")
@@ -270,7 +254,7 @@ async def analyze_document(
         logger.error(f"Request {request_id}: Error reading file size: {e}")
         raise HTTPException(status_code=400, detail="Could not read file size")
     
-    # Create unique file ID and path
+    # Create unique file path
     file_id = str(uuid.uuid4())
     safe_filename = "".join(c for c in file.filename if c.isalnum() or c in "._- ")
     file_path = os.path.join(UPLOAD_DIR, f"{file_id}_{safe_filename}")
@@ -291,7 +275,7 @@ async def analyze_document(
         logger.info(f"  - Query: {query[:100]}...")
         logger.info(f"  - Detailed analysis: {detailed_analysis}")
         
-        # Process the financial document
+        # Process the document
         response = run_crew(
             query=query.strip(), 
             file_path=file_path,
@@ -302,7 +286,7 @@ async def analyze_document(
         processing_time = (datetime.utcnow() - start_time).total_seconds()
         logger.info(f"Request {request_id}: Analysis completed in {processing_time:.2f} seconds")
         
-        # Determine which agents were used
+        # Determine agents used
         agents_used = ["Verifier", "Financial Analyst"]
         if detailed_analysis:
             agents_used.extend(["Investment Advisor", "Risk Assessor"])
@@ -322,10 +306,8 @@ async def analyze_document(
         }
         
     except HTTPException:
-        # Re-raise HTTP exceptions
         raise
     except Exception as e:
-        # Log error and raise HTTP exception
         logger.error(f"Request {request_id}: Error processing document: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=500, 
@@ -346,7 +328,7 @@ async def analyze_document(
          summary="Get information about AI agents",
          tags=["Information"])
 async def list_agents():
-    """Get information about all available AI agents and their capabilities"""
+    """Return information about all available AI agents"""
     return {
         "agents": [
             {
@@ -417,8 +399,7 @@ async def list_agents():
          summary="Get API usage statistics",
          tags=["Information"])
 async def get_stats():
-    """Get basic API statistics (implement with database for production)"""
-    # This is a placeholder - implement with actual database in production
+    """Return API usage statistics (placeholder - implement with database)"""
     return {
         "status": "operational",
         "total_analyses": "N/A (tracking not implemented)",
