@@ -1,5 +1,8 @@
-# crewai==0.30.0  # Isko hatao aur yeh daalo:
-crewai==0.28.8    # Stable version for Python 3.13
+# Old line - remove this:
+# crewai==0.30.0
+
+# Add these lines:
+crewai==0.28.8
 crewai-tools==0.1.2
 fastapi==0.110.3
 uvicorn==0.29.0
@@ -11,4 +14,3 @@ pydantic-settings==2.2.1
 jinja2==3.1.4
 python-multipart==0.0.9
 langchain-openai==0.1.3
-langchain-community==0.2.5
